@@ -1,0 +1,48 @@
+.terminal-container {
+  background: #1e1e1e;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-header {
+  background: #323232;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #d4d4d4;
+  font-size: 0.9rem;
+}
+
+.close-button {
+  background: #f44336;
+  border: none;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.close-button:hover {
+  background: #d32f2f;
+}
+
+.terminal {
+  flex: 1;
+  overflow: auto;
+}
+
+.xterm .xterm-viewport {
+  overflow-y: auto !important;
+}

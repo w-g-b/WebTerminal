@@ -1,0 +1,74 @@
+const terminalManager = require('./terminal');
+const { sanitizeCommand } = require('./utils/commandFilter');
+
+function setupSocket(io) {
+  io.on('connection', (socket) => {
+    const userId = socket.user?.username || 'anonymous';
+
+    console.log(`User connected: ${userId}`);
+
+    socket.on('create_session', () => {
+      try {
+        const session = terminalManager.createSession(userId);
+        
+        session.pty.onData((data) => {
+          socket.emit('output_data', {
+            sessionId: session.id,
+            data: data
+          });
+        });
+
+        socket.emit('session_created', {
+          sessionId: session.id,
+          stats: terminalManager.getStats()
+        });
+
+      } catch (error) {
+        socket.emit('error', { message: error.message });
+      }
+    });
+
+    socket.on('input_command', ({ sessionId, command }) => {
+      try {
+        const sanitizedCommand = sanitizeCommand(command);
+        terminalManager.write(sessionId, sanitizedCommand);
+      } catch (error) {
+        socket.emit('error', { message: error.message });
+      }
+    });
+
+    socket.on('resize', ({ sessionId, cols, rows }) => {
+      try {
+        terminalManager.resize(sessionId, cols, rows);
+      } catch (error) {
+        socket.emit('error', { message: error.message });
+      }
+    });
+
+    socket.on('close_session', ({ sessionId }) => {
+      try {
+        terminalManager.closeSession(sessionId);
+        socket.emit('session_closed', { sessionId });
+      } catch (error) {
+        socket.emit('error', { message: error.message });
+      }
+    });
+
+    socket.on('list_sessions', () => {
+      const sessions = terminalManager.getUserSessions(userId);
+      socket.emit('sessions_list', sessions.map(s => ({
+        id: s.id,
+        createdAt: s.createdAt
+      })));
+    });
+
+    socket.on('disconnect', () => {
+      console.log(`User disconnected: ${userId}`);
+      terminalManager.closeUserSessions(userId);
+    });
+
+    socket.emit('connected', { userId });
+  });
+}
+
+module.exports = { setupSocket };

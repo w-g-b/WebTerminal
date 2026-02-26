@@ -102,6 +102,10 @@ export default function App() {
   };
 
   const handleCreateSession = () => {
+    if (!connected) {
+      setError('Please connect to server first');
+      return;
+    }
     websocket.createSession();
   };
 

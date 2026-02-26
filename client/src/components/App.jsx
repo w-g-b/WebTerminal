@@ -7,11 +7,11 @@ import './App.css';
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [mode, setMode] = useState('terminal');
+  const [mode, setMode] = useState('simple');
   const [sessionId, setSessionId] = useState(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState('');
-  const [transportMode, setTransportMode] = useState('websocket');
+  const [transportMode, setTransportMode] = useState('polling');
 
   useEffect(() => {
     const token = localStorage.getItem('token');

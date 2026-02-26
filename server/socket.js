@@ -7,9 +7,13 @@ function setupSocket(io) {
 
     console.log(`User connected: ${userId}`);
 
+    socket.socketSessions = new Set();
+
     socket.on('create_session', () => {
       try {
         const session = terminalManager.createSession(userId);
+        
+        socket.socketSessions.add(session.id);
         
         session.pty.onData((data) => {
           socket.emit('output_data', {
@@ -48,6 +52,7 @@ function setupSocket(io) {
     socket.on('close_session', ({ sessionId }) => {
       try {
         terminalManager.closeSession(sessionId);
+        socket.socketSessions.delete(sessionId);
         socket.emit('session_closed', { sessionId });
       } catch (error) {
         socket.emit('error', { message: error.message });
@@ -64,7 +69,9 @@ function setupSocket(io) {
 
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${userId}`);
-      terminalManager.closeUserSessions(userId);
+      socket.socketSessions.forEach(sessionId => {
+        terminalManager.closeSession(sessionId);
+      });
     });
 
     socket.emit('connected', { userId });

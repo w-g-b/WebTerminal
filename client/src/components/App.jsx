@@ -10,6 +10,7 @@ export default function App() {
   const [mode, setMode] = useState('simple');
   const [sessionId, setSessionId] = useState(null);
   const [connected, setConnected] = useState(false);
+  const [autoConnected, setAutoConnected] = useState(false);
   const [error, setError] = useState('');
   const [transportMode, setTransportMode] = useState('polling');
   const [sidebarVisible, setSidebarVisible] = useState(true);
@@ -20,7 +21,6 @@ export default function App() {
     
     if (token && username) {
       setUser(username);
-      connectWebSocket(token);
     }
 
     return () => {
@@ -71,14 +71,26 @@ export default function App() {
     websocket.disconnect();
     setConnected(false);
     setTransportMode(mode);
-    const token = localStorage.getItem('token');
-    await connectWebSocket(token, mode);
   };
 
   const handleLogin = (username) => {
     setUser(username);
-    const token = localStorage.getItem('token');
-    connectWebSocket(token);
+  };
+
+  const handleConnect = async () => {
+    if (connected) {
+      websocket.disconnect();
+      setConnected(false);
+      setAutoConnected(false);
+    } else {
+      const token = localStorage.getItem('token');
+      try {
+        await connectWebSocket(token);
+        setAutoConnected(true);
+      } catch (err) {
+        setError('Failed to connect to server');
+      }
+    }
   };
 
   const handleLogout = () => {
@@ -126,9 +138,18 @@ export default function App() {
       <div className="app-content">
         <div className={`sidebar ${sidebarVisible ? 'visible' : 'hidden'}`}>
           <div className="connection-status">
-            <span className={`status ${connected ? 'connected' : 'disconnected'}`}>
-              {connected ? '● Connected' : '○ Disconnected'}
-            </span>
+            <div className="status-display">
+              <span className={`status-indicator ${connected ? 'connected' : 'disconnected'}`}></span>
+              <span className="status-text">
+                {connected ? 'Connected' : 'Disconnected'}
+              </span>
+            </div>
+            <button 
+              className={`connection-btn ${connected ? 'disconnect' : 'connect'}`}
+              onClick={handleConnect}
+            >
+              {connected ? 'Disconnect' : 'Connect'}
+            </button>
             <span className="transport-mode">
               ({transportMode === 'websocket' ? 'WebSocket' : 'Polling'})
             </span>

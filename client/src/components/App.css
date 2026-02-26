@@ -121,26 +121,82 @@
   background: #f5f5f5;
   border-radius: 4px;
   font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.status {
+.status-display {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  font-size: 0.9rem;
 }
 
-.status.connected {
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-indicator.connected {
+  background: #4caf50;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
+}
+
+.status-indicator.disconnected {
+  background: #f44336;
+}
+
+.status-text {
+  font-weight: 500;
+  color: #666;
+}
+
+.status-text.connected {
   color: #4caf50;
 }
 
-.status.disconnected {
-  color: #f44336;
+.connection-btn {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: #2a5298;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.9rem;
+  color: white;
+  font-weight: 500;
+}
+
+.connection-btn:hover {
+  background: #1e3c72;
+  transform: translateY(-1px);
+}
+
+.connection-btn.connect {
+  background: #4caf50;
+}
+
+.connection-btn.connect:hover {
+  background: #388e3c;
+}
+
+.connection-btn.disconnect {
+  background: #f44336;
+}
+
+.connection-btn.disconnect:hover {
+  background: #d32f2f;
 }
 
 .transport-mode {
   color: #666;
   font-size: 0.8rem;
-  margin-left: 0.5rem;
+  text-align: center;
 }
 
 .transport-selector button {

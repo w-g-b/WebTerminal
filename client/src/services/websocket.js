@@ -12,9 +12,11 @@ class WebSocketService {
     }
 
     return new Promise((resolve, reject) => {
-      this.socket = io('http://localhost:3000', {
+      this.socket = io('/', {
         auth: { token },
-        transports: ['websocket', 'polling']
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionDelay: 1000
       });
 
       this.socket.on('connect', () => {
@@ -32,6 +34,7 @@ class WebSocketService {
       });
 
       this.socket.on('output_data', (data) => {
+        console.log('Received output:', data);
         this.emit('output', data);
       });
 
@@ -69,6 +72,7 @@ class WebSocketService {
   }
 
   sendCommand(sessionId, command) {
+    console.log('Sending command:', sessionId, command, command.charCodeAt(0));
     this.socket?.emit('input_command', { sessionId, command });
   }
 

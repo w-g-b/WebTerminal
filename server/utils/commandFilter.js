@@ -49,8 +49,7 @@ function filterCommand(command) {
 }
 
 function sanitizeCommand(command) {
-  let sanitized = command.trim();
-  sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
+  let sanitized = command;
   return sanitized;
 }
 

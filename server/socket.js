@@ -30,8 +30,8 @@ function setupSocket(io) {
 
     socket.on('input_command', ({ sessionId, command }) => {
       try {
-        const sanitizedCommand = sanitizeCommand(command);
-        terminalManager.write(sessionId, sanitizedCommand);
+        console.log(`Received command: ${JSON.stringify({ sessionId, command: command.charCodeAt(0) })}`);
+        terminalManager.write(sessionId, command);
       } catch (error) {
         socket.emit('error', { message: error.message });
       }

@@ -10,17 +10,24 @@
     "build": "cd client && npm run build",
     "install-all": "npm install && cd client && npm install"
   },
-  "keywords": ["terminal", "web", "shell", "websocket"],
+  "keywords": [
+    "terminal",
+    "web",
+    "shell",
+    "websocket"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.7.2",
-    "jsonwebtoken": "^9.0.2",
+    "axios": "^1.13.5",
     "bcryptjs": "^2.4.3",
-    "node-pty": "^1.0.0",
-    "dotenv": "^16.3.1",
+    "concurrently": "^8.2.2",
     "cors": "^2.8.5",
-    "concurrently": "^8.2.2"
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "node-pty": "^1.0.0",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.8.3"
   }
 }

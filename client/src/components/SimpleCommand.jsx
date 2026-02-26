@@ -2,6 +2,30 @@ import { useState, useEffect, useRef } from 'react';
 import websocket from '../services/websocket';
 import './SimpleCommand.css';
 
+function stripAnsi(str) {
+  let result = str;
+  
+  const ansiPatterns = [
+    /\x1b\[[0-9;]*m/g,
+    /\x1b\[[0-9]*;[0-9]*;[0-9]*m/g,
+    /\x1b\[[0-9]*;[0-9]*m/g,
+    /\x1b\[[0-9]*[A-Za-z]/g,
+    /\x1b\[[0-9]*;[0-9]*[A-Za-z]/g,
+    /\x1b\[[0-9]*;[0-9]*;[0-9]*[A-Za-z]/g,
+    /\x1b\[[?][0-9;]*[hl]/g,
+    /\x1b\]0;[^\x07]*\x07/g,
+    /\x07/g,
+    /\[\?2004[hl]/g,
+    /\]\0;.*?\x07/g
+  ];
+  
+  ansiPatterns.forEach(pattern => {
+    result = result.replace(pattern, '');
+  });
+  
+  return result;
+}
+
 export default function SimpleCommand({ sessionId, onClose, onOutput }) {
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
@@ -18,7 +42,10 @@ export default function SimpleCommand({ sessionId, onClose, onOutput }) {
   useEffect(() => {
     const handleOutput = (data) => {
       if (data.sessionId === sessionId) {
-        setOutput(prev => prev + data.data);
+        const cleanData = stripAnsi(data.data);
+        if (cleanData) {
+          setOutput(prev => prev + cleanData);
+        }
       }
     };
 

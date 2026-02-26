@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from 'xterm-addon-web-links';
 import 'xterm/css/xterm.css';
 import websocket from '../services/websocket';
 import './Terminal.css';
@@ -21,11 +22,15 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
         background: '#1e1e1e',
         foreground: '#d4d4d4',
         cursor: '#ffffff'
-      }
+      },
+      disableStdin: false,
+      allowProposedApi: true
     });
 
     const fitAddon = new FitAddon();
+    const webLinksAddon = new WebLinksAddon();
     terminal.loadAddon(fitAddon);
+    terminal.loadAddon(webLinksAddon);
 
     terminal.open(terminalRef.current);
     fitAddon.fit();

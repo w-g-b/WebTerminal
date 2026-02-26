@@ -11,6 +11,7 @@ export default function App() {
   const [sessionId, setSessionId] = useState(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState('');
+  const [transportMode, setTransportMode] = useState('websocket');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -52,12 +53,20 @@ export default function App() {
     };
   }, []);
 
-  const connectWebSocket = async (token) => {
+  const connectWebSocket = async (token, mode = transportMode) => {
     try {
-      await websocket.connect(token);
+      await websocket.connect(token, mode);
     } catch (err) {
       setError('Failed to connect to server');
     }
+  };
+
+  const switchTransport = async (mode) => {
+    websocket.disconnect();
+    setConnected(false);
+    setTransportMode(mode);
+    const token = localStorage.getItem('token');
+    await connectWebSocket(token, mode);
   };
 
   const handleLogin = (username) => {
@@ -109,8 +118,27 @@ export default function App() {
             <span className={`status ${connected ? 'connected' : 'disconnected'}`}>
               {connected ? '● Connected' : '○ Disconnected'}
             </span>
+            <span className="transport-mode">
+              ({transportMode === 'websocket' ? 'WebSocket' : 'Polling'})
+            </span>
           </div>
-          
+
+          <div className="transport-selector">
+            <h3>Transport</h3>
+            <button
+              className={transportMode === 'websocket' ? 'active' : ''}
+              onClick={() => switchTransport('websocket')}
+            >
+              WebSocket
+            </button>
+            <button
+              className={transportMode === 'polling' ? 'active' : ''}
+              onClick={() => switchTransport('polling')}
+            >
+              Polling
+            </button>
+          </div>
+
           <div className="mode-selector">
             <h3>Mode</h3>
             <button

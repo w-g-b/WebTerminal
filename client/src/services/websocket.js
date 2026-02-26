@@ -6,7 +6,7 @@ class WebSocketService {
     this.listeners = new Map();
   }
 
-  connect(token) {
+  connect(token, transportMode = 'websocket') {
     if (this.socket?.connected) {
       return Promise.resolve();
     }
@@ -14,7 +14,7 @@ class WebSocketService {
     return new Promise((resolve, reject) => {
       this.socket = io('/', {
         auth: { token },
-        transports: ['websocket'],
+        transports: transportMode === 'websocket' ? ['websocket'] : ['polling'],
         reconnection: true,
         reconnectionDelay: 1000
       });

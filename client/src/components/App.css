@@ -94,6 +94,37 @@
   color: #f44336;
 }
 
+.transport-mode {
+  color: #666;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+}
+
+.transport-selector button {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: #e8e8e8;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.9rem;
+}
+
+.transport-selector button:hover {
+  background: #d8d8d8;
+}
+
+.transport-selector button.active {
+  background: #2a5298;
+  color: white;
+}
+
+.transport-selector button.active:hover {
+  background: #1e3c72;
+}
+
 .mode-selector button,
 .session-controls button {
   width: 100%;

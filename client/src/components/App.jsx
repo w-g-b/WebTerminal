@@ -68,6 +68,16 @@ export default function App() {
   };
 
   const switchTransport = async (mode) => {
+    if (connected) {
+      const confirmed = window.confirm('已有连接存在，确认断开并切换传输方式？');
+      if (!confirmed) {
+        return;
+      }
+    }
+    if (sessionId) {
+      websocket.closeSession(sessionId);
+      setSessionId(null);
+    }
     websocket.disconnect();
     setConnected(false);
     setTransportMode(mode);

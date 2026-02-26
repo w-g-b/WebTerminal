@@ -11,8 +11,9 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
   const terminalInstanceRef = useRef(null);
   const fitAddonRef = useRef(null);
   const resizeHandleRef = useRef(null);
-  const heightRef = useRef(500);
-  const [height, setHeight] = useState(500);
+  const defaultHeight = Math.floor(window.innerHeight * 0.8);
+  const heightRef = useRef(defaultHeight);
+  const [height, setHeight] = useState(defaultHeight);
   const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {

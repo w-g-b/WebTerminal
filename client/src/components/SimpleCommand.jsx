@@ -62,7 +62,6 @@ export default function SimpleCommand({ sessionId, onClose, onOutput }) {
 
     setHistory([...history, input]);
     setHistoryIndex(history.length);
-    setOutput(prev => prev + `$ ${input}\n`);
     onOutput(sessionId, input + '\n');
     setInput('');
   };

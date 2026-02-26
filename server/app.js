@@ -12,7 +12,10 @@ const io = new Server(server, {
     origin: '*',
     methods: ['GET', 'POST'],
     credentials: true
-  }
+  },
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  maxHttpBufferSize: 1e6
 });
 
 // 静态文件服务

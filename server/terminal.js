@@ -11,7 +11,7 @@ class TerminalManager {
     this.sessionCount = 0;
   }
 
-  createSession(userId) {
+  createSession(userId, callback) {
     if (this.sessionCount >= MAX_SESSIONS) {
       throw new Error('Maximum sessions reached');
     }
@@ -33,8 +33,24 @@ class TerminalManager {
       userId,
       pty: ptyProcess,
       createdAt: Date.now(),
-      timeout: setTimeout(() => this.closeSession(sessionId), SESSION_TIMEOUT)
+      callback: callback,
+      timeout: null,
+      warningTimeout: null
     };
+
+    const WARNING_BEFORE_CLOSE = 30000;
+
+    session.warningTimeout = setTimeout(() => {
+      console.log(`[DEBUG] Warning timeout triggered for session ${sessionId}`);
+      if (session.callback) {
+        session.callback(sessionId, 'warning');
+      }
+    }, SESSION_TIMEOUT - WARNING_BEFORE_CLOSE);
+
+    session.timeout = setTimeout(() => {
+      console.log(`[DEBUG] Final timeout triggered for session ${sessionId}`);
+      this.closeSession(sessionId);
+    }, SESSION_TIMEOUT);
 
     this.sessions.set(sessionId, session);
     this.sessionCount++;
@@ -67,20 +83,97 @@ class TerminalManager {
   }
 
   closeSession(sessionId) {
+    console.log(`[DEBUG] closeSession called for sessionId: ${sessionId}`);
     const session = this.sessions.get(sessionId);
     if (session) {
       clearTimeout(session.timeout);
+      clearTimeout(session.warningTimeout);
+      console.log(`[DEBUG] Session found, timeout and warning timeout cleared. Calling callback if exists.`);
+      
+      if (session.callback) {
+        console.log(`[DEBUG] Callback exists, executing...`);
+        session.callback(sessionId, 'close');
+      } else {
+        console.log(`[DEBUG] No callback found for session ${sessionId}`);
+      }
+      
       session.pty.destroy();
       this.sessions.delete(sessionId);
       this.sessionCount--;
+      console.log(`[DEBUG] Session ${sessionId} destroyed and removed. Remaining sessions: ${this.sessionCount}`);
+    } else {
+      console.log(`[DEBUG] Session ${sessionId} not found in sessions map`);
     }
   }
 
   refreshTimeout(sessionId) {
+    console.log(`[DEBUG] refreshTimeout called for sessionId: ${sessionId}`);
     const session = this.sessions.get(sessionId);
     if (session) {
       clearTimeout(session.timeout);
-      session.timeout = setTimeout(() => this.closeSession(sessionId), SESSION_TIMEOUT);
+      clearTimeout(session.warningTimeout);
+      
+      const WARNING_BEFORE_CLOSE = 30000;
+      
+      session.warningTimeout = setTimeout(() => {
+        console.log(`[DEBUG] Warning timeout triggered for session ${sessionId}`);
+        if (session.callback) {
+          session.callback(sessionId, 'warning');
+        }
+      }, SESSION_TIMEOUT - WARNING_BEFORE_CLOSE);
+      
+      session.timeout = setTimeout(() => {
+        console.log(`[DEBUG] Final timeout triggered for session ${sessionId}`);
+        this.closeSession(sessionId);
+      }, SESSION_TIMEOUT);
+      
+      console.log(`[DEBUG] Timers refreshed for session ${sessionId}`);
+    }
+  }
+  
+  acknowledgeWarning(sessionId) {
+    console.log(`[DEBUG] acknowledgeWarning called for sessionId: ${sessionId}`);
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      clearTimeout(session.timeout);
+      clearTimeout(session.warningTimeout);
+      
+      session.warningTimeout = setTimeout(() => {
+        console.log(`[DEBUG] Warning timeout triggered for session ${sessionId}`);
+        if (session.callback) {
+          session.callback(sessionId, 'warning');
+        }
+      }, SESSION_TIMEOUT - 30000);
+      
+      session.timeout = setTimeout(() => {
+        console.log(`[DEBUG] Final timeout triggered for session ${sessionId}`);
+        this.closeSession(sessionId);
+      }, SESSION_TIMEOUT);
+      
+      console.log(`[DEBUG] Timers refreshed for session ${sessionId}`);
+    }
+  }
+  
+  keepAlive(sessionId) {
+    console.log(`[DEBUG] keepAlive called for sessionId: ${sessionId}`);
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      clearTimeout(session.timeout);
+      clearTimeout(session.warningTimeout);
+      
+      session.warningTimeout = setTimeout(() => {
+        console.log(`[DEBUG] Warning timeout triggered for session ${sessionId}`);
+        if (session.callback) {
+          session.callback(sessionId, 'warning');
+        }
+      }, SESSION_TIMEOUT - WARNING_TIMEOUT);
+      
+      session.timeout = setTimeout(() => {
+        console.log(`[DEBUG] Final timeout triggered for session ${sessionId}`);
+        this.closeSession(sessionId);
+      }, SESSION_TIMEOUT);
+      
+      console.log(`[DEBUG] Timers refreshed for session ${sessionId}`);
     }
   }
 

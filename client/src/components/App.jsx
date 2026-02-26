@@ -7,13 +7,14 @@ import './App.css';
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [mode, setMode] = useState('simple');
+  const [mode, setMode] = useState('terminal');
   const [sessionId, setSessionId] = useState(null);
   const [connected, setConnected] = useState(false);
   const [autoConnected, setAutoConnected] = useState(false);
   const [error, setError] = useState('');
   const [transportMode, setTransportMode] = useState('polling');
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [timeoutWarning, setTimeoutWarning] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -42,8 +43,14 @@ export default function App() {
       setSessionId(data.sessionId);
     });
 
-    websocket.on('sessionClosed', () => {
+    websocket.on('sessionClosed', (data) => {
+      console.log('[DEBUG] App received sessionClosed:', data);
       setSessionId(null);
+    });
+
+    websocket.on('session_timeout_warning', (data) => {
+      console.log('[DEBUG] App received session_timeout_warning:', data);
+      setTimeoutWarning(data);
     });
 
     websocket.on('error', (data) => {
@@ -55,6 +62,7 @@ export default function App() {
       websocket.off('disconnect');
       websocket.off('sessionCreated');
       websocket.off('sessionClosed');
+      websocket.off('session_timeout_warning');
       websocket.off('error');
     };
   }, []);
@@ -109,6 +117,16 @@ export default function App() {
     setUser(null);
     setSessionId(null);
     websocket.disconnect();
+  };
+
+  const handleTimeoutWarning = (action) => {
+    if (action === 'continue') {
+      websocket.acknowledgeWarning(timeoutWarning.sessionId);
+      setTimeoutWarning(null);
+    } else if (action === 'close') {
+      setSessionId(null);
+      setTimeoutWarning(null);
+    }
   };
 
   const handleCreateSession = () => {
@@ -217,6 +235,23 @@ export default function App() {
             </div>
           )}
         </div>
+
+        {timeoutWarning && (
+          <div className="timeout-warning-overlay">
+            <div className="timeout-warning-modal">
+              <h2>⏰ 会话即将超时</h2>
+              <p>您的终端会话将在 {timeoutWarning.remainingTime} 秒后关闭</p>
+              <div className="timeout-warning-actions">
+                <button className="btn-continue" onClick={() => handleTimeoutWarning('continue')}>
+                  继续使用
+                </button>
+                <button className="btn-close" onClick={() => handleTimeoutWarning('close')}>
+                  关闭会话
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <main className="main-content">
           {sessionId ? (

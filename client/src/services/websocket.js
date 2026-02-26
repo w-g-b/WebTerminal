@@ -57,6 +57,7 @@ class WebSocketService {
       });
 
       this.socket.on('session_closed', (data) => {
+        console.log('[DEBUG] Received session_closed event:', data);
         this.emit('sessionClosed', data);
       });
 
@@ -98,7 +99,11 @@ class WebSocketService {
     this.socket?.emit('close_session', { sessionId });
   }
 
-  listSessions() {
+  acknowledgeWarning(sessionId) {
+    this.socket?.emit('acknowledge_warning', { sessionId });
+  }
+
+  list() {
     this.socket?.emit('list_sessions');
   }
 

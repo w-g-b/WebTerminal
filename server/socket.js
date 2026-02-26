@@ -11,7 +11,23 @@ function setupSocket(io) {
 
     socket.on('create_session', () => {
       try {
-        const session = terminalManager.createSession(userId);
+        console.log(`[DEBUG] Creating session for user ${userId}`);
+        const sessionCallback = (sessionId, action) => {
+          console.log(`[DEBUG] sessionCallback triggered for session ${sessionId}, action: ${action}`);
+          
+          if (action === 'warning') {
+            console.log(`[DEBUG] Sending session_timeout_warning event to socket ${socket.id}`);
+            socket.emit('session_timeout_warning', { sessionId, remainingTime: 30 });
+          } else if (action === 'close') {
+            socket.socketSessions.delete(sessionId);
+            console.log(`[DEBUG] Emitting session_closed event to socket ${socket.id}`);
+            socket.emit('session_closed', { sessionId });
+            console.log(`Session ${sessionId} closed by timeout`);
+          }
+        };
+
+        const session = terminalManager.createSession(userId, sessionCallback);
+        console.log(`[DEBUG] Session created successfully with ID: ${session.id}, timeout: ${parseInt(process.env.SESSION_TIMEOUT || '300000')}ms`);
         
         socket.socketSessions.add(session.id);
         
@@ -27,9 +43,10 @@ function setupSocket(io) {
           stats: terminalManager.getStats()
         });
 
-        console.log(`Session created: ${session.id} by user: ${userId}, socket id: ${socket.id}`);
+        console.log(`Session created: ${session.id} by user: ${userId}, socket ${socket.id}`);
 
       } catch (error) {
+        console.error(`[ERROR] Failed to create session:`, error);
         socket.emit('error', { message: error.message });
       }
     });
@@ -38,6 +55,16 @@ function setupSocket(io) {
       try {
         console.log(`Received command from socket ${socket.id}: ${JSON.stringify({ sessionId, command: command.charCodeAt(0) })}`);
         terminalManager.write(sessionId, command);
+      } catch (error) {
+        socket.emit('error', { message: error.message });
+      }
+    });
+    
+    socket.on('acknowledge_warning', ({ sessionId }) => {
+      try {
+        console.log(`Received acknowledge_warning for session ${sessionId} from socket ${socket.id}`);
+        terminalManager.acknowledgeWarning(sessionId);
+        socket.emit('warning_acknowledged', { sessionId });
       } catch (error) {
         socket.emit('error', { message: error.message });
       }

@@ -323,3 +323,99 @@
 .no-session button:hover {
   background: #1e3c72;
 }
+
+.timeout-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.timeout-warning-modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.timeout-warning-modal h2 {
+  color: #ff9800;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.timeout-warning-modal p {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.timeout-warning-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.timeout-warning-actions button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+}
+
+.timeout-warning-actions .btn-continue {
+  background: #4caf50;
+  color: white;
+}
+
+.timeout-warning-actions .btn-continue:hover {
+  background: #388e3c;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+.timeout-warning-actions .btn-close {
+  background: #f44336;
+  color: white;
+}
+
+.timeout-warning-actions .btn-close:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
+}

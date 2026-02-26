@@ -44,6 +44,7 @@ class WebSocketService {
 
       this.socket.on('disconnect', () => {
         console.log('WebSocket disconnected');
+        this.emit('disconnect');
       });
 
       this.socket.on('output_data', (data) => {

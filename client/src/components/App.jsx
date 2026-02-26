@@ -34,6 +34,10 @@ export default function App() {
       setError('');
     });
 
+    websocket.on('disconnect', () => {
+      setConnected(false);
+    });
+
     websocket.on('sessionCreated', (data) => {
       setSessionId(data.sessionId);
     });
@@ -48,6 +52,7 @@ export default function App() {
 
     return () => {
       websocket.off('connected');
+      websocket.off('disconnect');
       websocket.off('sessionCreated');
       websocket.off('sessionClosed');
       websocket.off('error');
@@ -185,6 +190,7 @@ export default function App() {
                 sessionId={sessionId}
                 onClose={handleCloseSession}
                 onOutput={(id, data) => websocket.sendCommand(id, data)}
+                connected={connected}
               />
             ) : (
               <SimpleCommand

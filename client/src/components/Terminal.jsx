@@ -6,7 +6,7 @@ import 'xterm/css/xterm.css';
 import websocket from '../services/websocket';
 import './Terminal.css';
 
-export default function Terminal({ sessionId, onClose, onOutput }) {
+export default function Terminal({ sessionId, onClose, onOutput, connected }) {
   const terminalRef = useRef(null);
   const terminalInstanceRef = useRef(null);
   const fitAddonRef = useRef(null);
@@ -15,12 +15,17 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
   const heightRef = useRef(defaultHeight);
   const [height, setHeight] = useState(defaultHeight);
   const [isResizing, setIsResizing] = useState(false);
+  const [showDisconnectWarning, setShowDisconnectWarning] = useState(false);
   const sessionIdRef = useRef(sessionId);
   const onOutputRef = useRef(onOutput);
 
   useEffect(() => {
     sessionIdRef.current = sessionId;
   }, [sessionId]);
+
+  useEffect(() => {
+    setShowDisconnectWarning(!connected);
+  }, [connected]);
 
   useEffect(() => {
     onOutputRef.current = onOutput;
@@ -150,6 +155,11 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
         <button className="close-button" onClick={onClose}>×</button>
       </div>
       <div className="terminal" ref={terminalRef}></div>
+      {showDisconnectWarning && (
+        <div className="disconnect-warning">
+          ⚠️ Connection lost. Please wait for reconnection...
+        </div>
+      )}
       <div 
         className={`resize-handle ${isResizing ? 'resizing' : ''}`}
         ref={resizeHandleRef}

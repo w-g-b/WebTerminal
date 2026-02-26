@@ -8,7 +8,11 @@ class WebSocketService {
 
   connect(token, transportMode = 'websocket') {
     if (this.socket?.connected) {
-      return Promise.resolve();
+      if (this.socket.io.opts.transports.includes(transportMode)) {
+        return Promise.resolve();
+      } else {
+        this.disconnect();
+      }
     }
 
     return new Promise((resolve, reject) => {
@@ -16,7 +20,16 @@ class WebSocketService {
         auth: { token },
         transports: transportMode === 'websocket' ? ['websocket'] : ['polling'],
         reconnection: true,
-        reconnectionDelay: 1000
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 10000,
+        timeout: 120000,
+        forceNew: true,
+        rememberUpgrade: false,
+        upgrade: transportMode === 'websocket',
+        query: { transport: transportMode },
+        polling: {
+          duration: 60000
+        }
       });
 
       this.socket.on('connect', () => {

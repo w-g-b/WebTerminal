@@ -16,7 +16,13 @@ const io = new Server(server, {
     origin: process.env.NODE_ENV === 'production' ? '*' : 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true
-  }
+  },
+  pingTimeout: 300000,
+  pingInterval: 60000,
+  transports: ['websocket', 'polling'],
+  httpCompression: false,
+  perMessageDeflate: false,
+  allowEIO3: true
 });
 
 const PORT = process.env.PORT || 8080;

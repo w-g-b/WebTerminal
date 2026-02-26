@@ -99,7 +99,7 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
       const handleMouseMove = (e) => {
         e.preventDefault();
         const newHeight = startHeight + (e.clientY - startY);
-        if (newHeight >= 200 && newHeight <= 800) {
+        if (newHeight >= 200 && newHeight <= 2000) {
           heightRef.current = newHeight;
           container.style.height = `${newHeight}px`;
           if (fitAddonRef.current) {

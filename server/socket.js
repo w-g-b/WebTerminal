@@ -5,7 +5,7 @@ function setupSocket(io) {
   io.on('connection', (socket) => {
     const userId = socket.user?.username || 'anonymous';
 
-    console.log(`User connected: ${userId}`);
+    console.log(`User connected: ${userId}, socket id: ${socket.id}`);
 
     socket.socketSessions = new Set();
 
@@ -27,6 +27,8 @@ function setupSocket(io) {
           stats: terminalManager.getStats()
         });
 
+        console.log(`Session created: ${session.id} by user: ${userId}, socket id: ${socket.id}`);
+
       } catch (error) {
         socket.emit('error', { message: error.message });
       }
@@ -34,7 +36,7 @@ function setupSocket(io) {
 
     socket.on('input_command', ({ sessionId, command }) => {
       try {
-        console.log(`Received command: ${JSON.stringify({ sessionId, command: command.charCodeAt(0) })}`);
+        console.log(`Received command from socket ${socket.id}: ${JSON.stringify({ sessionId, command: command.charCodeAt(0) })}`);
         terminalManager.write(sessionId, command);
       } catch (error) {
         socket.emit('error', { message: error.message });
@@ -54,6 +56,7 @@ function setupSocket(io) {
         terminalManager.closeSession(sessionId);
         socket.socketSessions.delete(sessionId);
         socket.emit('session_closed', { sessionId });
+        console.log(`Session closed: ${sessionId} by user: ${userId}, socket id: ${socket.id}`);
       } catch (error) {
         socket.emit('error', { message: error.message });
       }
@@ -68,7 +71,7 @@ function setupSocket(io) {
     });
 
     socket.on('disconnect', () => {
-      console.log(`User disconnected: ${userId}`);
+      console.log(`User disconnected: ${userId}, socket id: ${socket.id}, sessions closed: ${socket.socketSessions.size}`);
       socket.socketSessions.forEach(sessionId => {
         terminalManager.closeSession(sessionId);
       });

@@ -37,6 +37,11 @@ export default function SimpleCommand({ sessionId, onClose, onOutput }) {
   const heightRef = useRef(defaultHeight);
   const [height, setHeight] = useState(defaultHeight);
   const [isResizing, setIsResizing] = useState(false);
+  const sessionIdRef = useRef(sessionId);
+
+  useEffect(() => {
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
 
   useEffect(() => {
     if (outputRef.current) {
@@ -46,7 +51,7 @@ export default function SimpleCommand({ sessionId, onClose, onOutput }) {
 
   useEffect(() => {
     const handleOutput = (data) => {
-      if (data.sessionId === sessionId) {
+      if (data.sessionId === sessionIdRef.current) {
         const cleanData = stripAnsi(data.data);
         if (cleanData) {
           setOutput(prev => prev + cleanData);
@@ -59,7 +64,7 @@ export default function SimpleCommand({ sessionId, onClose, onOutput }) {
     return () => {
       websocket.off('output', handleOutput);
     };
-  }, [sessionId]);
+  }, []);
 
   useEffect(() => {
     const resizeHandle = resizeHandleRef.current;

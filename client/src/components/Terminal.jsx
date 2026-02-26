@@ -15,6 +15,16 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
   const heightRef = useRef(defaultHeight);
   const [height, setHeight] = useState(defaultHeight);
   const [isResizing, setIsResizing] = useState(false);
+  const sessionIdRef = useRef(sessionId);
+  const onOutputRef = useRef(onOutput);
+
+  useEffect(() => {
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
+
+  useEffect(() => {
+    onOutputRef.current = onOutput;
+  }, [onOutput]);
 
   useEffect(() => {
     if (!sessionId || !terminalRef.current) return;
@@ -45,7 +55,7 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
     websocket.resize(sessionId, cols, rows);
 
     terminal.onData((data) => {
-      onOutput(sessionId, data);
+      onOutputRef.current(sessionId, data);
     });
 
     terminalInstanceRef.current = terminal;
@@ -54,11 +64,11 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
     return () => {
       terminal.dispose();
     };
-  }, [sessionId, onOutput]);
+  }, [sessionId]);
 
   useEffect(() => {
     const handleOutput = (data) => {
-      if (data.sessionId === sessionId && terminalInstanceRef.current) {
+      if (data.sessionId === sessionIdRef.current && terminalInstanceRef.current) {
         terminalInstanceRef.current.write(data.data);
       }
     };
@@ -68,7 +78,7 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
     return () => {
       websocket.off('output', handleOutput);
     };
-  }, [sessionId]);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -76,14 +86,14 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
         fitAddonRef.current.fit();
         const cols = terminalInstanceRef.current.cols;
         const rows = terminalInstanceRef.current.rows;
-        websocket.resize(sessionId, cols, rows);
+        websocket.resize(sessionIdRef.current, cols, rows);
       }
     };
 
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
-  }, [sessionId]);
+  }, []);
 
   useEffect(() => {
     const resizeHandle = resizeHandleRef.current;
@@ -116,7 +126,7 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
         if (fitAddonRef.current) {
           const cols = terminalInstanceRef.current.cols;
           const rows = terminalInstanceRef.current.rows;
-          websocket.resize(sessionId, cols, rows);
+          websocket.resize(sessionIdRef.current, cols, rows);
         }
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
@@ -131,7 +141,7 @@ export default function Terminal({ sessionId, onClose, onOutput }) {
     return () => {
       resizeHandle.removeEventListener('mousedown', handleMouseDown);
     };
-  }, [sessionId]);
+  }, []);
 
   return (
     <div className={`terminal-container ${isResizing ? 'resizing' : ''}`} style={{ height: `${height}px` }}>

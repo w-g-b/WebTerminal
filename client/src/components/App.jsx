@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Auth from './Auth';
 import Terminal from './Terminal';
 import SimpleCommand from './SimpleCommand';
@@ -12,6 +12,7 @@ export default function App() {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState('');
   const [transportMode, setTransportMode] = useState('polling');
+  const [sidebarVisible, setSidebarVisible] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -87,16 +88,16 @@ export default function App() {
     websocket.createSession();
   };
 
-  const handleOutput = (data) => {
-    console.log('Output:', data);
-  };
+  const handleOutput = useCallback((id, data) => {
+    websocket.sendCommand(id, data);
+  }, []);
 
-  const handleCloseSession = () => {
+  const handleCloseSession = useCallback(() => {
     if (sessionId) {
       websocket.closeSession(sessionId);
     }
     setSessionId(null);
-  };
+  }, [sessionId]);
 
   if (!user) {
     return <Auth onLogin={handleLogin} />;
@@ -105,7 +106,12 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Web Terminal</h1>
+        <div className="header-left">
+          <button className="toggle-sidebar" onClick={() => setSidebarVisible(!sidebarVisible)}>
+            {sidebarVisible ? '◀' : '▶'}
+          </button>
+          <h1>Web Terminal</h1>
+        </div>
         <div className="user-info">
           <span>{user}</span>
           <button onClick={handleLogout}>Logout</button>
@@ -113,7 +119,7 @@ export default function App() {
       </header>
 
       <div className="app-content">
-        <div className="sidebar">
+        <div className={`sidebar ${sidebarVisible ? 'visible' : 'hidden'}`}>
           <div className="connection-status">
             <span className={`status ${connected ? 'connected' : 'disconnected'}`}>
               {connected ? '● Connected' : '○ Disconnected'}

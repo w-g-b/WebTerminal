@@ -32,6 +32,10 @@ export default function SimpleCommand({ sessionId, onClose, onOutput }) {
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const outputRef = useRef(null);
+  const resizeHandleRef = useRef(null);
+  const heightRef = useRef(500);
+  const [height, setHeight] = useState(500);
+  const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
     if (outputRef.current) {
@@ -53,6 +57,46 @@ export default function SimpleCommand({ sessionId, onClose, onOutput }) {
 
     return () => {
       websocket.off('output', handleOutput);
+    };
+  }, [sessionId]);
+
+  useEffect(() => {
+    const resizeHandle = resizeHandleRef.current;
+    if (!resizeHandle) return;
+
+    const handleMouseDown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsResizing(true);
+      const startY = e.clientY;
+      const startHeight = heightRef.current;
+      const container = resizeHandle.parentElement;
+
+      const handleMouseMove = (e) => {
+        e.preventDefault();
+        const newHeight = startHeight + (e.clientY - startY);
+        if (newHeight >= 200 && newHeight <= 800) {
+          heightRef.current = newHeight;
+          container.style.height = `${newHeight}px`;
+        }
+      };
+
+      const handleMouseUp = (e) => {
+        e.preventDefault();
+        setIsResizing(false);
+        setHeight(heightRef.current);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    };
+
+    resizeHandle.addEventListener('mousedown', handleMouseDown);
+
+    return () => {
+      resizeHandle.removeEventListener('mousedown', handleMouseDown);
     };
   }, [sessionId]);
 
@@ -90,7 +134,7 @@ export default function SimpleCommand({ sessionId, onClose, onOutput }) {
   };
 
   return (
-    <div className="simple-command-container">
+    <div className={`simple-command-container ${isResizing ? 'resizing' : ''}`} style={{ height: `${height}px` }}>
       <div className="simple-command-header">
         <span>Command Input</span>
         <button className="close-button" onClick={onClose}>×</button>
@@ -111,6 +155,10 @@ export default function SimpleCommand({ sessionId, onClose, onOutput }) {
         <button type="submit">Run</button>
         <button type="button" onClick={clearOutput}>Clear</button>
       </form>
+      <div 
+        className={`resize-handle ${isResizing ? 'resizing' : ''}`}
+        ref={resizeHandleRef}
+      ></div>
     </div>
   );
 }

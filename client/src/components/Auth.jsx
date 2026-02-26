@@ -3,7 +3,6 @@ import { authAPI } from '../services/api';
 import './Auth.css';
 
 export default function Auth({ onLogin }) {
-  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,8 +13,7 @@ export default function Auth({ onLogin }) {
     setLoading(true);
 
     try {
-      const endpoint = isLogin ? authAPI.login : authAPI.register;
-      const response = await endpoint(formData.username, formData.password);
+      const response = await authAPI.login(formData.username, formData.password);
       
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('username', response.data.username);
@@ -34,7 +32,7 @@ export default function Auth({ onLogin }) {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h1>{isLogin ? 'Login' : 'Register'}</h1>
+        <h1>Login</h1>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Username</label>
@@ -55,31 +53,14 @@ export default function Auth({ onLogin }) {
               value={formData.password}
               onChange={handleChange}
               required
-              autoComplete={isLogin ? 'current-password' : 'new-password'}
+              autoComplete="current-password"
             />
           </div>
           {error && <div className="error">{error}</div>}
           <button type="submit" disabled={loading}>
-            {loading ? 'Loading...' : (isLogin ? 'Login' : 'Register')}
+            {loading ? 'Loading...' : 'Login'}
           </button>
         </form>
-        <p className="toggle-auth">
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
-          <button
-            type="button"
-            className="link-button"
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError('');
-              setFormData({ username: '', password: '' });
-            }}
-          >
-            {isLogin ? 'Register' : 'Login'}
-          </button>
-        </p>
-        <div className="hint">
-          Default admin: admin / admin123
-        </div>
       </div>
     </div>
   );

@@ -29,21 +29,6 @@ function verifyToken(token) {
   }
 }
 
-async function register(username, password) {
-  if (users.has(username)) {
-    throw new Error('User already exists');
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  users.set(username, {
-    username,
-    password: hashedPassword,
-    createdAt: new Date()
-  });
-
-  return generateToken(username);
-}
-
 async function login(username, password) {
   const user = users.get(username);
 
@@ -63,6 +48,5 @@ async function login(username, password) {
 module.exports = {
   generateToken,
   verifyToken,
-  register,
   login
 };

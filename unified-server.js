@@ -19,32 +19,13 @@ const io = new Server(server, {
 const { setupSocket } = require('./server/socket');
 const terminalManager = require('./server/terminal');
 const { authMiddleware } = require('./server/middleware/authMiddleware');
-const { login, register, verifyToken } = require('./server/auth');
+const { login, verifyToken } = require('./server/auth');
 
 // 静态文件服务
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // API 认证
 app.use(express.json());
-
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    }
-
-    const token = await register(username, password);
-    res.json({ token, username });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 app.post('/api/auth/login', async (req, res) => {
   try {

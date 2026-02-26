@@ -4,7 +4,7 @@
   "description": "Web-based terminal with shell command execution",
   "main": "server/app.js",
   "scripts": {
-    "dev": "node server/app.js",
+    "dev": "concurrently \"node server/app.js\" \"cd client && npm run dev\"",
     "server": "node server/index.js",
     "unified": "node unified-server.js",
     "build": "cd client && npm run build",

@@ -1,36 +1,10 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
-require('dotenv').config();
-
 const { authMiddleware } = require('./middleware/authMiddleware');
-const { socketAuthMiddleware } = require('./middleware/authMiddleware');
-const { login, verifyToken } = require('./auth');
-const { setupSocket } = require('./socket');
+const { login } = require('./auth');
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: process.env.NODE_ENV === 'production' ? '*' : 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-    credentials: true
-  },
-  pingTimeout: 300000,
-  pingInterval: 60000,
-  transports: ['websocket', 'polling'],
-  httpCompression: false,
-  perMessageDeflate: false,
-  allowEIO3: true
-});
+const router = express.Router();
 
-const PORT = process.env.PORT || 8080;
-
-app.use(cors());
-app.use(express.json());
-
-app.post('/api/auth/login', async (req, res) => {
+router.post('/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -45,11 +19,11 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.post('/api/auth/verify', authMiddleware, (req, res) => {
+router.post('/auth/verify', authMiddleware, (req, res) => {
   res.json({ valid: true, user: req.user });
 });
 
-app.get('/api/status', authMiddleware, (req, res) => {
+router.get('/status', authMiddleware, (req, res) => {
   const terminalManager = require('./terminal');
   res.json({ 
     status: 'ok',
@@ -58,17 +32,4 @@ app.get('/api/status', authMiddleware, (req, res) => {
   });
 });
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('client/dist'));
-  app.get('*', (req, res) => {
-    res.sendFile('client/dist/index.html', { root: process.cwd() });
-  });
-}
-
-io.use(socketAuthMiddleware);
-setupSocket(io);
-
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+module.exports = router;

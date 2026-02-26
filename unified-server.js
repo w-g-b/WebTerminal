@@ -18,7 +18,7 @@ const io = new Server(server, {
 // 导入其他模块
 const { setupSocket } = require('./server/socket');
 const terminalManager = require('./server/terminal');
-const { authMiddleware } = require('./server/middleware/authMiddleware');
+const { authMiddleware, socketAuthMiddleware } = require('./server/middleware/authMiddleware');
 const { login, verifyToken } = require('./server/auth');
 
 // 静态文件服务
@@ -55,6 +55,7 @@ app.get('/api/status', authMiddleware, (req, res) => {
 });
 
 // WebSocket 连接
+io.use(socketAuthMiddleware);
 setupSocket(io);
 
 const PORT = process.env.PORT || 4000;

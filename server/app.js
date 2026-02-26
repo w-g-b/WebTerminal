@@ -26,6 +26,8 @@ app.use('/api', require('./index'));
 
 // WebSocket
 const { setupSocket } = require('./socket');
+const { socketAuthMiddleware } = require('./middleware/authMiddleware');
+io.use(socketAuthMiddleware);
 setupSocket(io);
 
 const PORT = process.env.PORT || 8080;

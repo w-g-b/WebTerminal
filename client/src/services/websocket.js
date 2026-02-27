@@ -4,6 +4,9 @@ class WebSocketService {
   constructor() {
     this.socket = null;
     this.listeners = new Map();
+    this.heartbeatInterval = null;
+    this.heartbeatTimeout = 30000;
+    this.sessionIds = [];
   }
 
   connect(token, transportMode = 'websocket') {
@@ -19,7 +22,7 @@ class WebSocketService {
       this.socket = io('/', {
         auth: { token },
         transports: transportMode === 'websocket' ? ['websocket'] : ['polling'],
-        reconnection: true,
+        reconnection: false,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 10000,
         timeout: 120000,
@@ -34,6 +37,7 @@ class WebSocketService {
 
       this.socket.on('connect', () => {
         console.log('WebSocket connected');
+        this.startHeartbeat();
         resolve();
       });
 
@@ -44,6 +48,7 @@ class WebSocketService {
 
       this.socket.on('disconnect', () => {
         console.log('WebSocket disconnected');
+        this.stopHeartbeat();
         this.emit('disconnect');
       });
 
@@ -53,11 +58,18 @@ class WebSocketService {
       });
 
       this.socket.on('session_created', (data) => {
+        if (!this.sessionIds.includes(data.sessionId)) {
+          this.sessionIds.push(data.sessionId);
+        }
         this.emit('sessionCreated', data);
       });
 
       this.socket.on('session_closed', (data) => {
         console.log('[DEBUG] Received session_closed event:', data);
+        const index = this.sessionIds.indexOf(data.sessionId);
+        if (index > -1) {
+          this.sessionIds.splice(index, 1);
+        }
         this.emit('sessionClosed', data);
       });
 
@@ -72,10 +84,17 @@ class WebSocketService {
       this.socket.on('connected', (data) => {
         this.emit('connected', data);
       });
+
+      this.socket.on('session_timeout_warning', (data) => {
+        console.log('[DEBUG] Received session_timeout_warning event:', data);
+        this.emit('sessionTimeoutWarning', data);
+      });
     });
   }
 
   disconnect() {
+    this.stopHeartbeat();
+    this.sessionIds = [];
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
@@ -98,6 +117,39 @@ class WebSocketService {
   closeSession(sessionId) {
     console.log('[DEBUG] closeSession called for sessionId:', sessionId);
     this.socket?.emit('close_session', { sessionId });
+  }
+
+  closeAllSessions() {
+    return new Promise((resolve) => {
+      const sessionIds = this.sessionIds || [];
+      if (sessionIds.length === 0) {
+        resolve();
+        return;
+      }
+
+      let closedCount = 0;
+      const totalToClose = sessionIds.length;
+
+      const handleSessionClosed = (data) => {
+        closedCount++;
+        if (closedCount >= totalToClose) {
+          this.off('sessionClosed', handleSessionClosed);
+          this.sessionIds = [];
+          resolve();
+        }
+      };
+
+      this.on('sessionClosed', handleSessionClosed);
+
+      sessionIds.forEach(sessionId => {
+        this.socket?.emit('close_session', { sessionId });
+      });
+
+      setTimeout(() => {
+        this.off('sessionClosed', handleSessionClosed);
+        resolve();
+      }, 5000);
+    });
   }
 
   acknowledgeWarning(sessionId) {
@@ -134,6 +186,22 @@ class WebSocketService {
 
   isConnected() {
     return this.socket?.connected || false;
+  }
+
+  startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatInterval = setInterval(() => {
+      if (this.socket?.connected) {
+        this.socket.emit('ping', { timestamp: Date.now() });
+      }
+    }, this.heartbeatTimeout / 2);
+  }
+
+  stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
   }
 }
 

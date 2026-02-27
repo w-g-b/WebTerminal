@@ -18,6 +18,7 @@ export default function App() {
   const [sessionDisconnectedWarning, setSessionDisconnectedWarning] = useState(false);
   const [sessionActive, setSessionActive] = useState(true);
   const userInitiatedCloseRef = useRef(false);
+  const userInitiatedDisconnectRef = useRef(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -40,10 +41,12 @@ export default function App() {
     });
 
     websocket.on('disconnect', () => {
+      console.log('[DEBUG] disconnect event received, userInitiated:', userInitiatedDisconnectRef.current);
       setConnected(false);
-      if (sessionId) {
+      if (!userInitiatedDisconnectRef.current) {
         setSessionDisconnectedWarning(true);
       }
+      userInitiatedDisconnectRef.current = false;
     });
 
     websocket.on('sessionCreated', (data) => {
@@ -90,10 +93,13 @@ export default function App() {
       if (!confirmed) {
         return;
       }
-    }
-    if (sessionId) {
-      websocket.closeSession(sessionId);
-      setSessionId(null);
+
+      try {
+        await websocket.closeAllSessions();
+        setSessionId(null);
+      } catch (error) {
+        console.error('Error closing sessions:', error);
+      }
     }
     websocket.disconnect();
     setConnected(false);
@@ -106,6 +112,16 @@ export default function App() {
 
   const handleConnect = async () => {
     if (connected) {
+      userInitiatedDisconnectRef.current = true;
+      userInitiatedCloseRef.current = true;
+
+      try {
+        await websocket.closeAllSessions();
+        setSessionId(null);
+      } catch (error) {
+        console.error('Error closing sessions:', error);
+      }
+
       websocket.disconnect();
       setConnected(false);
       setAutoConnected(false);
@@ -121,11 +137,24 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    setUser(null);
-    setSessionId(null);
-    websocket.disconnect();
+    userInitiatedDisconnectRef.current = true;
+    userInitiatedCloseRef.current = true;
+
+    const doLogout = async () => {
+      try {
+        await websocket.closeAllSessions();
+        setSessionId(null);
+      } catch (error) {
+        console.error('Error closing sessions:', error);
+      }
+
+      websocket.disconnect();
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      setUser(null);
+    };
+
+    doLogout();
   };
 
   const handleTimeoutWarning = (action) => {
@@ -277,7 +306,7 @@ export default function App() {
           <div className="session-disconnect-overlay">
             <div className="session-disconnect-modal">
               <h2>⚠️ 连接已断开</h2>
-              <p>您的终端会话已断开连接，系统将自动尝试重连</p>
+              <p>您的终端会话已断开连接，请点击左侧Connect按钮重新连接</p>
               <div className="session-disconnect-actions">
                 <button className="btn-acknowledge" onClick={handleSessionDisconnected}>
                   我知道了

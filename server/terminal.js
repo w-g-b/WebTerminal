@@ -2,6 +2,14 @@ const pty = require('node-pty');
 const os = require('os');
 require('dotenv').config();
 
+function getTimestamp() {
+  return new Date().toISOString();
+}
+
+function log(message) {
+  console.log(`[${getTimestamp()}] ${message}`);
+}
+
 const MAX_SESSIONS = parseInt(process.env.MAX_SESSIONS || '10');
 const SESSION_TIMEOUT = parseInt(process.env.SESSION_TIMEOUT || '300000');
 
@@ -35,20 +43,21 @@ class TerminalManager {
       createdAt: Date.now(),
       callback: callback,
       timeout: null,
-      warningTimeout: null
+      warningTimeout: null,
+      closed: false
     };
 
     const WARNING_BEFORE_CLOSE = 30000;
 
     session.warningTimeout = setTimeout(() => {
-      console.log(`[DEBUG] Warning timeout triggered for session ${sessionId}`);
-      if (session.callback) {
+      if (!session.closed && session.callback) {
+        log(`[SESSION] ${sessionId} timeout warning`);
         session.callback(sessionId, 'warning');
       }
     }, SESSION_TIMEOUT - WARNING_BEFORE_CLOSE);
 
     session.timeout = setTimeout(() => {
-      console.log(`[DEBUG] Final timeout triggered for session ${sessionId}`);
+      log(`[SESSION] ${sessionId} timeout closing`);
       this.closeSession(sessionId);
     }, SESSION_TIMEOUT);
 
@@ -68,7 +77,7 @@ class TerminalManager {
 
   write(sessionId, data) {
     const session = this.sessions.get(sessionId);
-    if (session) {
+    if (session && !session.closed) {
       session.pty.write(data);
       this.refreshTimeout(sessionId);
     }
@@ -76,97 +85,84 @@ class TerminalManager {
 
   resize(sessionId, cols, rows) {
     const session = this.sessions.get(sessionId);
-    if (session) {
+    if (session && !session.closed) {
       session.pty.resize(cols, rows);
       this.refreshTimeout(sessionId);
     }
   }
 
   closeSession(sessionId) {
-    console.log(`[DEBUG] closeSession called for sessionId: ${sessionId}`);
     const session = this.sessions.get(sessionId);
-    if (session) {
+    if (session && !session.closed) {
+      log(`[SESSION] ${sessionId} closing`);
+      session.closed = true;
       clearTimeout(session.timeout);
       clearTimeout(session.warningTimeout);
-      console.log(`[DEBUG] Session found, timeout and warning timeout cleared.`);
-      
+      session.callback = null;
       session.pty.destroy();
       this.sessions.delete(sessionId);
       this.sessionCount--;
-      console.log(`[DEBUG] Session ${sessionId} destroyed and removed. Remaining sessions: ${this.sessionCount}`);
-    } else {
-      console.log(`[DEBUG] Session ${sessionId} not found in sessions map`);
+      log(`[SESSION] ${sessionId} closed, remaining: ${this.sessionCount}`);
     }
   }
 
   refreshTimeout(sessionId) {
-    console.log(`[DEBUG] refreshTimeout called for sessionId: ${sessionId}`);
     const session = this.sessions.get(sessionId);
-    if (session) {
+    if (session && !session.closed) {
       clearTimeout(session.timeout);
       clearTimeout(session.warningTimeout);
       
       const WARNING_BEFORE_CLOSE = 30000;
       
       session.warningTimeout = setTimeout(() => {
-        console.log(`[DEBUG] Warning timeout triggered for session ${sessionId}`);
-        if (session.callback) {
+        if (!session.closed && session.callback) {
+          log(`[SESSION] ${sessionId} timeout warning (refreshed)`);
           session.callback(sessionId, 'warning');
         }
       }, SESSION_TIMEOUT - WARNING_BEFORE_CLOSE);
       
       session.timeout = setTimeout(() => {
-        console.log(`[DEBUG] Final timeout triggered for session ${sessionId}`);
+        log(`[SESSION] ${sessionId} timeout closing (refreshed)`);
         this.closeSession(sessionId);
       }, SESSION_TIMEOUT);
       
-      console.log(`[DEBUG] Timers refreshed for session ${sessionId}`);
+      log(`[SESSION] ${sessionId} timeout refreshed (${SESSION_TIMEOUT/1000}s)`);
     }
   }
   
   acknowledgeWarning(sessionId) {
-    console.log(`[DEBUG] acknowledgeWarning called for sessionId: ${sessionId}`);
     const session = this.sessions.get(sessionId);
-    if (session) {
+    if (session && !session.closed) {
       clearTimeout(session.timeout);
       clearTimeout(session.warningTimeout);
-      
+
       session.warningTimeout = setTimeout(() => {
-        console.log(`[DEBUG] Warning timeout triggered for session ${sessionId}`);
-        if (session.callback) {
+        if (!session.closed && session.callback) {
           session.callback(sessionId, 'warning');
         }
       }, SESSION_TIMEOUT - 30000);
-      
+
       session.timeout = setTimeout(() => {
-        console.log(`[DEBUG] Final timeout triggered for session ${sessionId}`);
         this.closeSession(sessionId);
       }, SESSION_TIMEOUT);
-      
-      console.log(`[DEBUG] Timers refreshed for session ${sessionId}`);
     }
   }
-  
+
   keepAlive(sessionId) {
-    console.log(`[DEBUG] keepAlive called for sessionId: ${sessionId}`);
     const session = this.sessions.get(sessionId);
-    if (session) {
+    if (session && !session.closed) {
       clearTimeout(session.timeout);
       clearTimeout(session.warningTimeout);
-      
+
       session.warningTimeout = setTimeout(() => {
-        console.log(`[DEBUG] Warning timeout triggered for session ${sessionId}`);
-        if (session.callback) {
+        if (!session.closed && session.callback) {
           session.callback(sessionId, 'warning');
         }
-      }, SESSION_TIMEOUT - WARNING_TIMEOUT);
-      
+      }, SESSION_TIMEOUT - 30000);
+
       session.timeout = setTimeout(() => {
-        console.log(`[DEBUG] Final timeout triggered for session ${sessionId}`);
         this.closeSession(sessionId);
       }, SESSION_TIMEOUT);
-      
-      console.log(`[DEBUG] Timers refreshed for session ${sessionId}`);
     }
   }
 

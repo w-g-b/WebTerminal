@@ -15,6 +15,7 @@ export default function App() {
   const [transportMode, setTransportMode] = useState('polling');
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [timeoutWarning, setTimeoutWarning] = useState(null);
+  const [sessionDisconnectedWarning, setSessionDisconnectedWarning] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -33,10 +34,14 @@ export default function App() {
     websocket.on('connected', () => {
       setConnected(true);
       setError('');
+      setSessionDisconnectedWarning(false);
     });
 
     websocket.on('disconnect', () => {
       setConnected(false);
+      if (sessionId) {
+        setSessionDisconnectedWarning(true);
+      }
     });
 
     websocket.on('sessionCreated', (data) => {
@@ -127,6 +132,10 @@ export default function App() {
       setSessionId(null);
       setTimeoutWarning(null);
     }
+  };
+
+  const handleSessionDisconnected = () => {
+    setSessionDisconnectedWarning(false);
   };
 
   const handleCreateSession = () => {
@@ -247,6 +256,20 @@ export default function App() {
                 </button>
                 <button className="btn-close" onClick={() => handleTimeoutWarning('close')}>
                   关闭会话
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {sessionDisconnectedWarning && (
+          <div className="session-disconnect-overlay">
+            <div className="session-disconnect-modal">
+              <h2>⚠️ 连接已断开</h2>
+              <p>您的终端会话已断开连接，系统将自动尝试重连</p>
+              <div className="session-disconnect-actions">
+                <button className="btn-acknowledge" onClick={handleSessionDisconnected}>
+                  我知道了
                 </button>
               </div>
             </div>

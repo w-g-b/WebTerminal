@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Auth from './Auth';
 import Terminal from './Terminal';
-import SimpleCommand from './SimpleCommand';
 import websocket from '../services/websocket';
 import './App.css';
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [mode, setMode] = useState('terminal');
   const [sessionId, setSessionId] = useState(null);
   const [connected, setConnected] = useState(false);
   const [autoConnected, setAutoConnected] = useState(false);
@@ -261,22 +259,6 @@ export default function App() {
             </button>
           </div>
 
-          <div className="mode-selector">
-            <h3>Mode</h3>
-            <button
-              className={mode === 'terminal' ? 'active' : ''}
-              onClick={() => setMode('terminal')}
-            >
-              Terminal
-            </button>
-            <button
-              className={mode === 'simple' ? 'active' : ''}
-              onClick={() => setMode('simple')}
-            >
-              Simple
-            </button>
-          </div>
-
           <div className="session-controls">
             <h3>Session</h3>
             {!sessionId ? (
@@ -342,21 +324,13 @@ export default function App() {
 
         <main className="main-content">
           {sessionId ? (
-            mode === 'terminal' ? (
-              <Terminal
-                sessionId={sessionId}
-                onClose={handleCloseSession}
-                onOutput={(id, data) => websocket.sendCommand(id, data)}
-                connected={connected}
-                sessionActive={sessionActive}
-              />
-            ) : (
-              <SimpleCommand
-                sessionId={sessionId}
-                onClose={handleCloseSession}
-                onOutput={(id, data) => websocket.sendCommand(id, data)}
-              />
-            )
+            <Terminal
+              sessionId={sessionId}
+              onClose={handleCloseSession}
+              onOutput={(id, data) => websocket.sendCommand(id, data)}
+              connected={connected}
+              sessionActive={sessionActive}
+            />
           ) : (
             <div className="no-session">
               <h2>No Active Session</h2>

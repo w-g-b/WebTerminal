@@ -6,6 +6,30 @@ import 'xterm/css/xterm.css';
 import websocket from '../services/websocket';
 import './Terminal.css';
 
+function stripAnsi(str) {
+  let result = str;
+  
+  const ansiPatterns = [
+    /\x1b\[[0-9;]*m/g,
+    /\x1b\[[0-9]*;[0-9]*;[0-9]*m/g,
+    /\x1b\[[0-9]*;[0-9]*m/g,
+    /\x1b\[[0-9]*[A-Za-z]/g,
+    /\x1b\[[0-9]*;[0-9]*[A-Za-z]/g,
+    /\x1b\[[0-9]*;[0-9]*;[0-9]*[A-Za-z]/g,
+    /\x1b\[[?][0-9;]*[hl]/g,
+    /\x1b\]0;[^\x07]*\x07/g,
+    /\x07/g,
+    /\[\?2004[hl]/g,
+    /\]\0;.*?\x07/g
+  ];
+  
+  ansiPatterns.forEach(pattern => {
+    result = result.replace(pattern, '');
+  });
+  
+  return result;
+}
+
 export default function Terminal({ sessionId, onClose, onOutput, connected, sessionActive }) {
   const terminalRef = useRef(null);
   const terminalInstanceRef = useRef(null);
@@ -18,6 +42,11 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
   const [showDisconnectWarning, setShowDisconnectWarning] = useState(false);
   const sessionIdRef = useRef(sessionId);
   const onOutputRef = useRef(onOutput);
+  const [simpleInput, setSimpleInput] = useState('');
+  const [simpleOutput, setSimpleOutput] = useState('');
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const simpleOutputRef = useRef(null);
 
   useEffect(() => {
     sessionIdRef.current = sessionId;
@@ -30,6 +59,12 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
   useEffect(() => {
     onOutputRef.current = onOutput;
   }, [onOutput]);
+
+  useEffect(() => {
+    if (simpleOutputRef.current) {
+      simpleOutputRef.current.scrollTop = simpleOutputRef.current.scrollHeight;
+    }
+  }, [simpleOutput]);
 
   useEffect(() => {
     if (!sessionId || !terminalRef.current) return;
@@ -73,8 +108,14 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
 
   useEffect(() => {
     const handleOutput = (data) => {
-      if (data.sessionId === sessionIdRef.current && terminalInstanceRef.current) {
-        terminalInstanceRef.current.write(data.data);
+      if (data.sessionId === sessionIdRef.current) {
+        if (terminalInstanceRef.current) {
+          terminalInstanceRef.current.write(data.data);
+        }
+        const cleanData = stripAnsi(data.data);
+        if (cleanData) {
+          setSimpleOutput(prev => prev + cleanData);
+        }
       }
     };
 
@@ -148,6 +189,39 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
     };
   }, []);
 
+  const handleSimpleSubmit = (e) => {
+    e.preventDefault();
+    if (!simpleInput.trim()) return;
+
+    setHistory([...history, simpleInput]);
+    setHistoryIndex(history.length);
+    onOutputRef.current(sessionId, simpleInput + '\n');
+    setSimpleInput('');
+  };
+
+  const handleSimpleKeyDown = (e) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        setHistoryIndex(historyIndex - 1);
+        setSimpleInput(history[historyIndex - 1]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex < history.length - 1) {
+        setHistoryIndex(historyIndex + 1);
+        setSimpleInput(history[historyIndex + 1]);
+      } else {
+        setHistoryIndex(history.length);
+        setSimpleInput('');
+      }
+    }
+  };
+
+  const clearSimpleOutput = () => {
+    setSimpleOutput('');
+  };
+
   return (
     <div className={`terminal-container ${isResizing ? 'resizing' : ''}`} style={{ height: `${height}px` }}>
       <div className="terminal-header">
@@ -165,6 +239,20 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
           ⚠️ 连接已断开，正在尝试重连...
         </div>
       )}
+      <div className="simple-command-section">
+        <form className="simple-input-area" onSubmit={handleSimpleSubmit}>
+          <span className="prompt">$</span>
+          <input
+            type="text"
+            value={simpleInput}
+            onChange={(e) => setSimpleInput(e.target.value)}
+            onKeyDown={handleSimpleKeyDown}
+            placeholder="Type a command..."
+            autoComplete="off"
+          />
+          <button type="submit">Run</button>
+        </form>
+      </div>
       <div 
         className={`resize-handle ${isResizing ? 'resizing' : ''}`}
         ref={resizeHandleRef}

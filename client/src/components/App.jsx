@@ -17,6 +17,7 @@ export default function App() {
   const [timeoutWarning, setTimeoutWarning] = useState(null);
   const [sessionDisconnectedWarning, setSessionDisconnectedWarning] = useState(false);
   const [sessionActive, setSessionActive] = useState(true);
+  const [errorModal, setErrorModal] = useState(null);
   const userInitiatedCloseRef = useRef(false);
   const userInitiatedDisconnectRef = useRef(false);
 
@@ -56,6 +57,7 @@ export default function App() {
 
     websocket.on('sessionClosed', (data) => {
       console.log('[DEBUG] App received sessionClosed:', data, 'userInitiatedClose:', userInitiatedCloseRef.current);
+      setSessionId(null);
       setSessionActive(false);
       userInitiatedCloseRef.current = false;
     });
@@ -66,7 +68,14 @@ export default function App() {
     });
 
     websocket.on('error', (data) => {
-      setError(data.message);
+      if (data.message === 'Invalid or closed session') {
+        setErrorModal({
+          message: '会话已失效或已关闭',
+          subMessage: '请重新创建会话'
+        });
+      } else {
+        setError(data.message);
+      }
     });
 
     return () => {
@@ -296,6 +305,21 @@ export default function App() {
                 </button>
                 <button className="btn-close" onClick={() => handleTimeoutWarning('close')}>
                   关闭会话
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {errorModal && (
+          <div className="error-modal-overlay">
+            <div className="error-modal">
+              <h2>❌ 会话错误</h2>
+              <p>{errorModal.message}</p>
+              <p className="error-submessage">{errorModal.subMessage}</p>
+              <div className="error-modal-actions">
+                <button className="btn-close" onClick={() => setErrorModal(null)}>
+                  确定
                 </button>
               </div>
             </div>

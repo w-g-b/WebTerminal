@@ -478,5 +478,70 @@
 .session-disconnect-actions button:hover {
   background: #1e3c72;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(42, 82, 152, 0.3);
+}
+
+.error-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1002;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.error-modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+
+.error-modal h2 {
+  color: #f44336;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.error-modal p {
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.error-submessage {
+  font-size: 0.9rem;
+  color: #999;
+}
+
+.error-modal-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.error-modal-actions button {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+  background: #f44336;
+  color: white;
+}
+
+.error-modal-actions button:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
 }

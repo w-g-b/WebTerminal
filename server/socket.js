@@ -24,7 +24,14 @@ function setupSocket(io) {
     socket.on('ping', (data) => {
       log(`[REQUEST] ping from ${userId}`);
       socket.emit('pong', data);
-      log(`[RESPONSE] pong to ${userId}`);
+
+      socket.socketSessions.forEach(sessionId => {
+        try {
+          terminalManager.refreshTimeout(sessionId);
+        } catch (error) {
+          logError(`[ERROR] Failed to refresh timeout for session ${sessionId}: ${error.message}`);
+        }
+      });
     });
 
     socket.on('create_session', () => {

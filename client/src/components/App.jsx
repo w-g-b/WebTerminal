@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Auth from './Auth';
 import Terminal from './Terminal';
 import SimpleCommand from './SimpleCommand';
@@ -16,8 +16,8 @@ export default function App() {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [timeoutWarning, setTimeoutWarning] = useState(null);
   const [sessionDisconnectedWarning, setSessionDisconnectedWarning] = useState(false);
-  const [sessionTimeoutClosedWarning, setSessionTimeoutClosedWarning] = useState(false);
   const [sessionActive, setSessionActive] = useState(true);
+  const userInitiatedCloseRef = useRef(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -52,9 +52,9 @@ export default function App() {
     });
 
     websocket.on('sessionClosed', (data) => {
-      console.log('[DEBUG] App received sessionClosed:', data);
+      console.log('[DEBUG] App received sessionClosed:', data, 'userInitiatedClose:', userInitiatedCloseRef.current);
       setSessionActive(false);
-      setSessionTimeoutClosedWarning(true);
+      userInitiatedCloseRef.current = false;
     });
 
     websocket.on('session_timeout_warning', (data) => {
@@ -143,16 +143,15 @@ export default function App() {
     setSessionDisconnectedWarning(false);
   };
 
-  const handleSessionTimeoutClosed = () => {
-    setSessionTimeoutClosedWarning(false);
-  };
-
   const handleCreateSession = () => {
     if (!connected) {
       setError('Please connect to server first');
       return;
     }
-    setSessionTimeoutClosedWarning(false);
+    if (sessionId && !sessionActive) {
+      setSessionId(null);
+      setSessionActive(true);
+    }
     websocket.createSession();
   };
 
@@ -162,6 +161,7 @@ export default function App() {
 
   const handleCloseSession = useCallback(() => {
     if (sessionId) {
+      userInitiatedCloseRef.current = true;
       websocket.closeSession(sessionId);
     }
     setSessionId(null);
@@ -280,20 +280,6 @@ export default function App() {
               <p>您的终端会话已断开连接，系统将自动尝试重连</p>
               <div className="session-disconnect-actions">
                 <button className="btn-acknowledge" onClick={handleSessionDisconnected}>
-                  我知道了
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {sessionTimeoutClosedWarning && (
-          <div className="session-timeout-closed-overlay">
-            <div className="session-timeout-closed-modal">
-              <h2>⏰ 会话已超时</h2>
-              <p>您的终端会话已因超时自动关闭</p>
-              <div className="session-timeout-closed-actions">
-                <button className="btn-acknowledge" onClick={handleSessionTimeoutClosed}>
                   我知道了
                 </button>
               </div>

@@ -96,6 +96,7 @@ class WebSocketService {
   }
 
   closeSession(sessionId) {
+    console.log('[DEBUG] closeSession called for sessionId:', sessionId);
     this.socket?.emit('close_session', { sessionId });
   }
 

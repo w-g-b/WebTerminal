@@ -88,14 +88,7 @@ class TerminalManager {
     if (session) {
       clearTimeout(session.timeout);
       clearTimeout(session.warningTimeout);
-      console.log(`[DEBUG] Session found, timeout and warning timeout cleared. Calling callback if exists.`);
-      
-      if (session.callback) {
-        console.log(`[DEBUG] Callback exists, executing...`);
-        session.callback(sessionId, 'close');
-      } else {
-        console.log(`[DEBUG] No callback found for session ${sessionId}`);
-      }
+      console.log(`[DEBUG] Session found, timeout and warning timeout cleared.`);
       
       session.pty.destroy();
       this.sessions.delete(sessionId);

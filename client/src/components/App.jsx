@@ -16,6 +16,7 @@ export default function App() {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [timeoutWarning, setTimeoutWarning] = useState(null);
   const [sessionDisconnectedWarning, setSessionDisconnectedWarning] = useState(false);
+  const [sessionTimeoutClosedWarning, setSessionTimeoutClosedWarning] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -51,6 +52,7 @@ export default function App() {
     websocket.on('sessionClosed', (data) => {
       console.log('[DEBUG] App received sessionClosed:', data);
       setSessionId(null);
+      setSessionTimeoutClosedWarning(true);
     });
 
     websocket.on('session_timeout_warning', (data) => {
@@ -136,6 +138,10 @@ export default function App() {
 
   const handleSessionDisconnected = () => {
     setSessionDisconnectedWarning(false);
+  };
+
+  const handleSessionTimeoutClosed = () => {
+    setSessionTimeoutClosedWarning(false);
   };
 
   const handleCreateSession = () => {
@@ -269,6 +275,20 @@ export default function App() {
               <p>您的终端会话已断开连接，系统将自动尝试重连</p>
               <div className="session-disconnect-actions">
                 <button className="btn-acknowledge" onClick={handleSessionDisconnected}>
+                  我知道了
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {sessionTimeoutClosedWarning && (
+          <div className="session-timeout-closed-overlay">
+            <div className="session-timeout-closed-modal">
+              <h2>⏰ 会话已超时</h2>
+              <p>您的终端会话已因超时自动关闭</p>
+              <div className="session-timeout-closed-actions">
+                <button className="btn-acknowledge" onClick={handleSessionTimeoutClosed}>
                   我知道了
                 </button>
               </div>

@@ -17,6 +17,7 @@ export default function App() {
   const [timeoutWarning, setTimeoutWarning] = useState(null);
   const [sessionDisconnectedWarning, setSessionDisconnectedWarning] = useState(false);
   const [sessionTimeoutClosedWarning, setSessionTimeoutClosedWarning] = useState(false);
+  const [sessionActive, setSessionActive] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -47,11 +48,12 @@ export default function App() {
 
     websocket.on('sessionCreated', (data) => {
       setSessionId(data.sessionId);
+      setSessionActive(true);
     });
 
     websocket.on('sessionClosed', (data) => {
       console.log('[DEBUG] App received sessionClosed:', data);
-      setSessionId(null);
+      setSessionActive(false);
       setSessionTimeoutClosedWarning(true);
     });
 
@@ -132,6 +134,7 @@ export default function App() {
       setTimeoutWarning(null);
     } else if (action === 'close') {
       setSessionId(null);
+      setSessionActive(true);
       setTimeoutWarning(null);
     }
   };
@@ -149,6 +152,7 @@ export default function App() {
       setError('Please connect to server first');
       return;
     }
+    setSessionTimeoutClosedWarning(false);
     websocket.createSession();
   };
 
@@ -161,6 +165,7 @@ export default function App() {
       websocket.closeSession(sessionId);
     }
     setSessionId(null);
+    setSessionActive(true);
   }, [sessionId]);
 
   if (!user) {
@@ -304,6 +309,7 @@ export default function App() {
                 onClose={handleCloseSession}
                 onOutput={(id, data) => websocket.sendCommand(id, data)}
                 connected={connected}
+                sessionActive={sessionActive}
               />
             ) : (
               <SimpleCommand

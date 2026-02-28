@@ -7,10 +7,13 @@ const users = new Map();
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 
 function initializeUsers() {
-  const adminPassword = bcrypt.hashSync('admin123', 10);
-  users.set('admin', {
-    username: 'admin',
-    password: adminPassword,
+  const defaultUsername = process.env.DEFAULT_USERNAME || 'admin';
+  const defaultPassword = process.env.DEFAULT_PASSWORD || 'admin123';
+  const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
+  
+  users.set(defaultUsername, {
+    username: defaultUsername,
+    password: hashedPassword,
     createdAt: new Date()
   });
 }

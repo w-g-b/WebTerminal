@@ -48,8 +48,13 @@ async function login(username, password) {
   return generateToken(username);
 }
 
+function getUser(username) {
+  return users.get(username);
+}
+
 module.exports = {
   generateToken,
   verifyToken,
-  login
+  login,
+  getUser
 };

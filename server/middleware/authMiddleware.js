@@ -1,4 +1,4 @@
-const { verifyToken } = require('../auth');
+const { verifyToken, getUser } = require('../auth');
 
 function authMiddleware(req, res, next) {
   const token = req.headers['authorization']?.replace('Bearer ', '');
@@ -11,6 +11,11 @@ function authMiddleware(req, res, next) {
 
   if (!decoded) {
     return res.status(401).json({ error: 'Invalid token' });
+  }
+
+  const user = getUser(decoded.username);
+  if (!user) {
+    return res.status(401).json({ error: 'token已失效，请重新登录' });
   }
 
   req.user = decoded;
@@ -28,6 +33,11 @@ function socketAuthMiddleware(socket, next) {
 
   if (!decoded) {
     return next(new Error('Authentication error: Invalid token'));
+  }
+
+  const user = getUser(decoded.username);
+  if (!user) {
+    return next(new Error('Authentication error: token已失效，请重新登录'));
   }
 
   socket.user = decoded;

@@ -19,6 +19,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && !error.config.url.includes('/auth/login')) {
+      alert(error.response?.data?.error || 'token已失效，请重新登录');
       localStorage.removeItem('token');
       localStorage.removeItem('username');
       window.location.href = '/';

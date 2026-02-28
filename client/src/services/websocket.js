@@ -43,6 +43,12 @@ class WebSocketService {
 
       this.socket.on('connect_error', (error) => {
         console.error('WebSocket connection error:', error);
+        if (error.message && error.message.includes('token已失效')) {
+          alert(error.message);
+          localStorage.removeItem('token');
+          localStorage.removeItem('username');
+          window.location.href = '/';
+        }
         reject(error);
       });
 

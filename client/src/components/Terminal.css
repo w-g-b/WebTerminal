@@ -16,6 +16,16 @@
   align-items: center;
   color: #d4d4d4;
   font-size: 0.9rem;
+  gap: 12px;
+}
+
+.connection-time {
+  font-family: 'Courier New', monospace;
+  background: #1e1e1e;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #4ec9b0;
 }
 
 .close-button {

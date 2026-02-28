@@ -47,6 +47,10 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const simpleOutputRef = useRef(null);
+  const [connectionTime, setConnectionTime] = useState(0);
+  const connectionStartTimeRef = useRef(null);
+  const timerRef = useRef(null);
+  const accumulatedTimeRef = useRef(0);
 
   useEffect(() => {
     sessionIdRef.current = sessionId;
@@ -54,6 +58,35 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
 
   useEffect(() => {
     setShowDisconnectWarning(!connected);
+  }, [connected, sessionActive]);
+
+  useEffect(() => {
+    const isActive = connected && sessionActive;
+    
+    if (isActive) {
+      if (!connectionStartTimeRef.current) {
+        connectionStartTimeRef.current = Date.now();
+      }
+      
+      timerRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - connectionStartTimeRef.current) / 1000);
+        const currentTime = accumulatedTimeRef.current + elapsed;
+        setConnectionTime(currentTime);
+      }, 1000);
+      
+      return () => {
+        clearInterval(timerRef.current);
+      };
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      if (connectionStartTimeRef.current) {
+        accumulatedTimeRef.current += Math.floor((Date.now() - connectionStartTimeRef.current) / 1000);
+        connectionStartTimeRef.current = null;
+      }
+    }
   }, [connected, sessionActive]);
 
   useEffect(() => {
@@ -222,10 +255,22 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
     setSimpleOutput('');
   };
 
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className={`terminal-container ${isResizing ? 'resizing' : ''}`} style={{ height: `${height}px` }}>
       <div className="terminal-header">
         <span>Terminal</span>
+        <span className="connection-time">⏱ {formatTime(connectionTime)}</span>
         <button className="close-button" onClick={onClose}>×</button>
       </div>
       <div className="terminal" ref={terminalRef}></div>

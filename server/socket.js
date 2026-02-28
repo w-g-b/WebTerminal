@@ -30,8 +30,7 @@ function setupSocket(io) {
           logger.warn(`Socket already has a session, closing existing session(s)`);
           socket.socketSessions.forEach(existingSessionId => {
             try {
-              terminal
-Manager.closeSession(existingSessionId);
+              terminalManager.closeSession(existingSessionId);
               logger.session(existingSessionId, 'closed on new create request');
             } catch (error) {
               logger.error(`Failed to close existing session ${existingSessionId}: ${error.message}`);

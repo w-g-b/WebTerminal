@@ -281,7 +281,7 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
       )}
       {showDisconnectWarning && sessionActive && (
         <div className="disconnect-warning">
-          ⚠️ 连接已断开，正在尝试重连...
+          ⚠️ 连接已断开，请connect后重新创建session
         </div>
       )}
       <div className="simple-command-section">

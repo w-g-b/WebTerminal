@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const http = require('http');
 const cors = require('cors');
 require('dotenv').config();
+const logger = require('./utils/logger');
 
 const app = express();
 
@@ -36,7 +37,7 @@ setupSocket(io);
 
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });
 
 module.exports = app;

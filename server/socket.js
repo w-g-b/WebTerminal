@@ -1,51 +1,40 @@
 const terminalManager = require('./terminal');
 const { sanitizeCommand } = require('./utils/commandFilter');
-
-function getTimestamp() {
-  return new Date().toISOString();
-}
-
-function log(message) {
-  console.log(`[${getTimestamp()}] ${message}`);
-}
-
-function logError(message) {
-  console.error(`[${getTimestamp()}] ${message}`);
-}
+const logger = require('./utils/logger');
 
 function setupSocket(io) {
   io.on('connection', (socket) => {
     const userId = socket.user?.username || 'anonymous';
 
-    log(`[SOCKET] ${userId} connected`);
-
+    logger.socket(userId, 'connected');
     socket.socketSessions = new Set();
 
     socket.on('ping', (data) => {
-      log(`[REQUEST] ping from ${userId}`);
+      logger.request(userId, 'ping');
       socket.emit('pong', data);
 
       socket.socketSessions.forEach(sessionId => {
         try {
           terminalManager.refreshTimeout(sessionId);
         } catch (error) {
-          logError(`[ERROR] Failed to refresh timeout for session ${sessionId}: ${error.message}`);
+          logger.error(`Failed to refresh timeout for session ${sessionId}: ${error.message}`);
         }
       });
     });
 
     socket.on('create_session', () => {
       try {
-        log(`[REQUEST] create_session from ${userId}`);
+        logger.request(userId, 'create_session');
 
         if (socket.socketSessions.size >= 1) {
-          log(`[ERROR] Socket already has a session, closing existing session(s)`);
+          logger.warn(`Socket already has a session, closing existing session(s)`);
           socket.socketSessions.forEach(existingSessionId => {
             try {
-              terminalManager.closeSession(existingSessionId);
-              log(`[SESSION] Closed existing session ${existingSessionId} on new create request`);
+              terminal
+Manager.closeSession(existingSessionId);
+              logger.session(existingSessionId, 'closed on new create request');
             } catch (error) {
-              logError(`[ERROR] Failed to close existing session ${existingSessionId}: ${error.message}`);
+              logger.error(`Failed to close existing session ${existingSessionId}: ${error.message}`);
             }
           });
           socket.socketSessions.clear();
@@ -58,13 +47,12 @@ function setupSocket(io) {
           }
 
           if (action === 'warning') {
-            log(`[RESPONSE] session_timeout_warning to ${userId} for ${sessionId}`);
             socket.emit('session_timeout_warning', { sessionId, remainingTime: 30 });
+            logger.session(sessionId, 'timeout warning');
           } else if (action === 'close') {
             socket.socketSessions.delete(sessionId);
             socket.emit('session_closed', { sessionId });
-            log(`[RESPONSE] session_closed to ${userId} for ${sessionId} (timeout)`);
-            log(`[SESSION] ${sessionId} timeout closed`);
+            logger.session(sessionId, 'timeout closed');
           }
         };
 
@@ -72,7 +60,6 @@ function setupSocket(io) {
         socket.socketSessions.add(session.id);
 
         session.pty.onData((data) => {
-          log(`[RESPONSE] output_data to ${userId} from ${session.id}: ${data.replace(/\n/g, '\\n').replace(/\r/g, '\\r')}`);
           socket.emit('output_data', {
             sessionId: session.id,
             data: data
@@ -84,11 +71,10 @@ function setupSocket(io) {
           stats: terminalManager.getStats()
         });
 
-        log(`[RESPONSE] session_created to ${userId} with ${session.id}`);
-        log(`[SESSION] ${session.id} created by ${userId}`);
+        logger.session(session.id, 'created', userId);
 
       } catch (error) {
-        logError(`[ERROR] Failed to create session: ${error.message}`);
+        logger.error(`Failed to create session: ${error.message}`);
         socket.emit('error', { message: error.message });
       }
     });
@@ -97,18 +83,14 @@ function setupSocket(io) {
       try {
         const session = terminalManager.getSession(sessionId);
         if (!session || session.closed) {
-          logError(`[ERROR] Invalid or closed session: ${sessionId}`);
+          logger.error(`Invalid or closed session: ${sessionId}`);
           socket.emit('error', { message: 'Invalid or closed session' });
           return;
         }
 
-        const displayData = command.charCodeAt(0) < 32 || command.charCodeAt(0) > 126
-          ? `\\x${command.charCodeAt(0).toString(16)}`
-          : command;
-        log(`[REQUEST] input_command from ${userId} for ${sessionId}: ${displayData}`);
         terminalManager.write(sessionId, command);
       } catch (error) {
-        logError(`[ERROR] input_command failed: ${error.message}`);
+        logger.error(`input_command failed: ${error.message}`);
         socket.emit('error', { message: error.message });
       }
     });
@@ -117,17 +99,15 @@ function setupSocket(io) {
       try {
         const session = terminalManager.getSession(sessionId);
         if (!session || session.closed) {
-          logError(`[ERROR] Invalid or closed session: ${sessionId}`);
+          logger.error(`Invalid or closed session: ${sessionId}`);
           socket.emit('error', { message: 'Invalid or closed session' });
           return;
         }
 
-        log(`[REQUEST] acknowledge_warning from ${userId} for ${sessionId}`);
         terminalManager.acknowledgeWarning(sessionId);
         socket.emit('warning_acknowledged', { sessionId });
-        log(`[RESPONSE] warning_acknowledged to ${userId} for ${sessionId}`);
       } catch (error) {
-        logError(`[ERROR] acknowledge_warning failed: ${error.message}`);
+        logger.error(`acknowledge_warning failed: ${error.message}`);
         socket.emit('error', { message: error.message });
       }
     });
@@ -136,16 +116,14 @@ function setupSocket(io) {
       try {
         const session = terminalManager.getSession(sessionId);
         if (!session || session.closed) {
-          logError(`[ERROR] Invalid or closed session: ${sessionId}`);
+          logger.error(`Invalid or closed session: ${sessionId}`);
           socket.emit('error', { message: 'Invalid or closed session' });
           return;
         }
 
-        log(`[REQUEST] resize from ${userId} for ${sessionId}: ${cols}x${rows}`);
         terminalManager.resize(sessionId, cols, rows);
-        log(`[RESPONSE] resize acknowledged for ${sessionId}`);
       } catch (error) {
-        logError(`[ERROR] resize failed: ${error.message}`);
+        logger.error(`resize failed: ${error.message}`);
         socket.emit('error', { message: error.message });
       }
     });
@@ -154,42 +132,37 @@ function setupSocket(io) {
       try {
         const session = terminalManager.getSession(sessionId);
         if (!session || session.closed) {
-          log(`[REQUEST] close_session for already closed session: ${sessionId}`);
           socket.socketSessions.delete(sessionId);
           return;
         }
 
-        log(`[REQUEST] close_session from ${userId} for ${sessionId}`);
         terminalManager.closeSession(sessionId);
         socket.socketSessions.delete(sessionId);
         socket.emit('session_closed', { sessionId });
-        log(`[RESPONSE] session_closed to ${userId} for ${sessionId}`);
-        log(`[SESSION] ${sessionId} closed by ${userId}`);
+        logger.session(sessionId, 'closed by', userId);
       } catch (error) {
-        logError(`[ERROR] close_session failed: ${error.message}`);
+        logger.error(`close_session failed: ${error.message}`);
         socket.emit('error', { message: error.message });
       }
     });
 
     socket.on('list_sessions', () => {
       try {
-        log(`[REQUEST] list_sessions from ${userId}`);
         const sessions = terminalManager.getUserSessions(userId);
         const sessionList = sessions.map(s => ({
           id: s.id,
           createdAt: s.createdAt
         }));
         socket.emit('sessions_list', sessionList);
-        log(`[RESPONSE] sessions_list to ${userId}: ${sessionList.length} sessions`);
       } catch (error) {
-        logError(`[ERROR] list_sessions failed: ${error.message}`);
+        logger.error(`list_sessions failed: ${error.message}`);
         socket.emit('error', { message: error.message });
       }
     });
 
     socket.on('disconnect', () => {
       try {
-        log(`[SOCKET] ${userId} disconnected, closing ${socket.socketSessions.size} sessions`);
+        logger.socket(userId, 'disconnected', `closing ${socket.socketSessions.size} sessions`);
         const sessionIds = Array.from(socket.socketSessions);
         socket.socketSessions.clear();
 
@@ -200,11 +173,11 @@ function setupSocket(io) {
               terminalManager.closeSession(sessionId);
             }
           } catch (error) {
-            logError(`[ERROR] Failed to close session ${sessionId}: ${error.message}`);
+            logger.error(`Failed to close session ${sessionId}: ${error.message}`);
           }
         });
       } catch (error) {
-        logError(`[ERROR] disconnect handler failed: ${error.message}`);
+        logger.error(`disconnect handler failed: ${error.message}`);
       }
     });
 

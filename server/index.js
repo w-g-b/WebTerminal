@@ -1,6 +1,7 @@
 const express = require('express');
 const { authMiddleware } = require('./middleware/authMiddleware');
 const { login } = require('./auth');
+const logger = require('./utils/logger');
 
 const router = express.Router();
 
@@ -13,8 +14,10 @@ router.post('/auth/login', async (req, res) => {
     }
 
     const token = await login(username, password);
+    logger.info(`[AUTH] User ${username} logged in successfully`);
     res.json({ token, username });
   } catch (error) {
+    logger.error(`[AUTH] Login failed for ${username}: ${error.message}`);
     res.status(401).json({ error: error.message });
   }
 });

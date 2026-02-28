@@ -13,7 +13,7 @@ export default function App() {
   const [transportMode, setTransportMode] = useState('polling');
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [timeoutWarning, setTimeoutWarning] = useState(null);
-  const [sessionDisconnectedWarning, setSessionDisconnectedWarning] = useState(false);
+
   const [sessionActive, setSessionActive] = useState(true);
   const [errorModal, setErrorModal] = useState(null);
   const userInitiatedCloseRef = useRef(false);
@@ -36,15 +36,11 @@ export default function App() {
     websocket.on('connected', () => {
       setConnected(true);
       setError('');
-      setSessionDisconnectedWarning(false);
     });
 
     websocket.on('disconnect', () => {
       console.log('[DEBUG] disconnect event received, userInitiated:', userInitiatedDisconnectRef.current);
       setConnected(false);
-      if (!userInitiatedDisconnectRef.current) {
-        setSessionDisconnectedWarning(true);
-      }
       userInitiatedDisconnectRef.current = false;
     });
 
@@ -308,19 +304,7 @@ export default function App() {
           </div>
         )}
 
-        {sessionDisconnectedWarning && (
-          <div className="session-disconnect-overlay">
-            <div className="session-disconnect-modal">
-              <h2>⚠️ 连接已断开</h2>
-              <p>您的终端会话已断开连接，请点击左侧Connect按钮重新连接</p>
-              <div className="session-disconnect-actions">
-                <button className="btn-acknowledge" onClick={handleSessionDisconnected}>
-                  我知道了
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         <main className="main-content">
           {sessionId ? (

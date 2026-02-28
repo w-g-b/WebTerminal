@@ -39,7 +39,7 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
   const heightRef = useRef(defaultHeight);
   const [height, setHeight] = useState(defaultHeight);
   const [isResizing, setIsResizing] = useState(false);
-  const [showDisconnectWarning, setShowDisconnectWarning] = useState(false);
+
   const sessionIdRef = useRef(sessionId);
   const onOutputRef = useRef(onOutput);
   const [simpleInput, setSimpleInput] = useState('');
@@ -56,9 +56,7 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
     sessionIdRef.current = sessionId;
   }, [sessionId]);
 
-  useEffect(() => {
-    setShowDisconnectWarning(!connected);
-  }, [connected, sessionActive]);
+
 
   useEffect(() => {
     const isActive = connected && sessionActive;
@@ -279,11 +277,7 @@ export default function Terminal({ sessionId, onClose, onOutput, connected, sess
           ⏰ 会话已超时关闭，历史记录可继续查看
         </div>
       )}
-      {showDisconnectWarning && sessionActive && (
-        <div className="disconnect-warning">
-          ⚠️ 连接已断开，请connect后重新创建session
-        </div>
-      )}
+
       <div className="simple-command-section">
         <form className="simple-input-area" onSubmit={handleSimpleSubmit}>
           <span className="prompt">$</span>

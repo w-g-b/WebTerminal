@@ -71,7 +71,7 @@ SESSION_TIMEOUT=300000
 **配置文件优先级规则**：
 - 优先使用项目根目录下的 `.env` 文件
 - 如果 `.env` 不存在，则使用 `.env.dev` 文件
-- 此规则适用于所有需要加载环境变量的模块（`server/app.js`、`server/auth.js`、`server/terminal.js`、`unified-server.js`）
+- 此规则适用于所有需要加载环境变量的模块（`server/app.js`、`server/auth.js`、`server/terminal.js`）
 
 **建议**：
 - 生产环境：使用 `.env` 配置生产环境变量

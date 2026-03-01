@@ -5,8 +5,7 @@
   "main": "server/app.js",
   "scripts": {
     "dev": "concurrently \"node server/app.js\" \"cd client && npm run dev\"",
-    "server": "node server/index.js",
-    "unified": "node unified-server.js",
+    "server": "node server/app.js",
     "build": "cd client && npm run build",
     "install-all": "npm install && cd client && npm install"
   },

@@ -27,7 +27,7 @@ const io = new Server(server, {
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // API 路由
-app.use('/api', require('./index'));
+app.use('/api', require('./routes'));
 
 // WebSocket
 const { setupSocket } = require('./socket');

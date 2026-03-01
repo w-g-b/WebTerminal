@@ -1,6 +1,6 @@
 const pty = require('node-pty');
 const os = require('os');
-require('dotenv').config();
+require('../utils/config');
 const logger = require('./utils/logger');
 
 const MAX_SESSIONS = parseInt(process.env.MAX_SESSIONS || '10');

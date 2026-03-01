@@ -3,7 +3,7 @@ const path = require('path');
 const { Server } = require('socket.io');
 const http = require('http');
 const cors = require('cors');
-require('dotenv').config();
+require('../utils/config');
 const logger = require('./utils/logger');
 
 const app = express();

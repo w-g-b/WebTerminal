@@ -31,7 +31,7 @@ class WebSocketService {
         upgrade: transportMode === 'websocket',
         query: { transport: transportMode },
         polling: {
-          duration: 60000
+          duration: transportMode === 'websocket' ? 60000 : 5000
         }
       });
 

@@ -43,8 +43,9 @@ class WebSocketService {
 
       this.socket.on('connect_error', (error) => {
         console.error('WebSocket connection error:', error);
-        if (error.message && error.message.includes('token已失效')) {
-          alert(error.message);
+        const errorMsg = error.message || error.description || '';
+        if (errorMsg.includes('token已失效') || errorMsg.includes('Invalid token') || errorMsg.includes('No token provided')) {
+          alert(errorMsg);
           localStorage.removeItem('token');
           localStorage.removeItem('username');
           window.location.href = '/';

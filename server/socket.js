@@ -1,5 +1,4 @@
 const terminalManager = require('./terminal');
-const { sanitizeCommand } = require('./utils/commandFilter');
 const logger = require('./utils/logger');
 
 function setupSocket(io) {
